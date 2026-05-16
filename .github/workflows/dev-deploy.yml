@@ -1,12 +1,19 @@
 name: "Dev Infrastructure Deploy"
+
 on:
   push:
-    branches: [main]
-    paths: ["environments/dev/**", "modules/**", ".github/workflows/dev-deploy.yml"]
+    branches:
+      - main
+    paths:
+      - "environments/dev/**"
+      - "modules/**"
+      - ".github/workflows/dev-deploy.yml"
   workflow_dispatch:
+
 permissions:
   id-token: write
   contents: read
+
 jobs:
   terraform:
     name: "Terraform Apply Dev"
@@ -15,22 +22,37 @@ jobs:
       run:
         working-directory: ./environments/dev
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
           aws-region: us-east-1
           audience: sts.amazonaws.com
-      - uses: hashicorp/setup-terraform@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
-      - run: terraform fmt -check -recursive ../../modules/
-      - run: |
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive ../../modules/
+
+      - name: Terraform Init
+        run: |
           terraform init \
             -backend-config="bucket=${{ secrets.AWS_DEV_STATE_BUCKET }}" \
             -backend-config="key=dev/terraform.tfstate" \
             -backend-config="region=us-east-1" \
             -backend-config="dynamodb_table=${{ secrets.AWS_DEV_LOCKS_TABLE }}"
-      - run: terraform validate
-      - run: terraform plan -out=tfplan
-      - run: terraform apply -auto-approve tfplan
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan

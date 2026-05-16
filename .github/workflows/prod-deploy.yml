@@ -1,12 +1,19 @@
 name: "Prod Infrastructure Deploy"
+
 on:
   push:
-    branches: [main]
-    paths: ["environments/prod/**", "modules/**", ".github/workflows/prod-deploy.yml"]
+    branches:
+      - main
+    paths:
+      - "environments/prod/**"
+      - "modules/**"
+      - ".github/workflows/prod-deploy.yml"
   workflow_dispatch:
+
 permissions:
   id-token: write
   contents: read
+
 jobs:
   terraform-plan:
     name: "Terraform Plan Prod"
@@ -15,21 +22,32 @@ jobs:
       run:
         working-directory: ./environments/prod
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_PROD_ROLE_ARN }}
           aws-region: us-east-1
-      - uses: hashicorp/setup-terraform@v3
+          audience: sts.amazonaws.com
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
-      - run: |
+
+      - name: Terraform Init
+        run: |
           terraform init \
             -backend-config="bucket=${{ secrets.AWS_PROD_STATE_BUCKET }}" \
             -backend-config="key=prod/terraform.tfstate" \
             -backend-config="region=us-east-1" \
             -backend-config="dynamodb_table=${{ secrets.AWS_PROD_LOCKS_TABLE }}"
-      - run: terraform plan
+
+      - name: Terraform Plan
+        run: terraform plan
+
   terraform-apply:
     name: "Terraform Apply Prod"
     needs: terraform-plan
@@ -39,18 +57,28 @@ jobs:
       run:
         working-directory: ./environments/prod
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_PROD_ROLE_ARN }}
           aws-region: us-east-1
-      - uses: hashicorp/setup-terraform@v3
+          audience: sts.amazonaws.com
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
-      - run: |
+
+      - name: Terraform Init
+        run: |
           terraform init \
             -backend-config="bucket=${{ secrets.AWS_PROD_STATE_BUCKET }}" \
             -backend-config="key=prod/terraform.tfstate" \
             -backend-config="region=us-east-1" \
             -backend-config="dynamodb_table=${{ secrets.AWS_PROD_LOCKS_TABLE }}"
-      - run: terraform apply -auto-approve
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
