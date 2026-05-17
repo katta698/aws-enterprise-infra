@@ -46,7 +46,7 @@ jobs:
             -backend-config="dynamodb_table=${{ secrets.AWS_PROD_LOCKS_TABLE }}"
 
       - name: Terraform Plan
-        run: terraform plan -var-file=terraform.tfvars
+        run: terraform plan
 
   terraform-apply:
     name: "Terraform Apply Prod"
@@ -81,4 +81,4 @@ jobs:
             -backend-config="dynamodb_table=${{ secrets.AWS_PROD_LOCKS_TABLE }}"
 
       - name: Terraform Apply
-        run: terraform apply -var-file=terraform.tfvars -auto-approve
+        run: terraform apply -auto-approve
