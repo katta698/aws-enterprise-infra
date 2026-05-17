@@ -41,3 +41,13 @@ resource "aws_security_group" "ec2" {
 
   tags = { Name = "${var.environment}-ec2-sg" }
 }
+
+resource "aws_kms_key" "backup_key" {
+  description             = "KMS Key for AWS Backup Vault Encryption"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+
+  tags = {
+    Name = "${var.environment}-backup-key"
+  }
+}
