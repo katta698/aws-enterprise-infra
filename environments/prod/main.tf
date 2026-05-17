@@ -23,23 +23,23 @@ module "iam" {
 }
 
 module "compute" {
-  source               = "../../modules/compute"
-  environment          = var.environment
-  vpc_id               = module.network.vpc_id
-  public_subnets       = module.network.public_subnets
-  private_subnets      = module.network.private_subnets
-  alb_sg_id            = module.security.alb_sg_id
-  ec2_sg_id            = module.security.ec2_sg_id
-  instance_type        = var.instance_type
-  iam_instance_profile = module.iam.ec2_profile_name
+  source        = "../../modules/compute"
+  environment   = var.environment
+  vpc_id        = module.network.vpc_id
+  alb_sg_id     = module.security.alb_sg_id
+  ec2_sg_id     = module.security.ec2_sg_id
+  instance_type = var.instance_type
+
+  # Corrected argument mappings to match compute module schema
+  public_subnet_ids     = module.network.public_subnets
+  private_subnet_ids    = module.network.private_subnets
+  instance_profile_name = module.iam.ec2_profile_name
 }
 
 module "backup" {
-  source      = "../../modules/backup"
-  environment = var.environment
-
-  # Connected Missing parameters to root variables/IAM outputs
+  source          = "../../modules/backup"
+  environment     = var.environment
   kms_key_arn     = module.security.kms_key_arn
   backup_role_arn = module.iam.backup_role_arn
-  retention_days  = 30 # Stricter lifecycle retention window for Production
+  retention_days  = 30
 }
