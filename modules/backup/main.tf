@@ -9,9 +9,9 @@ resource "aws_backup_plan" "plan" {
   rule {
     rule_name         = "${var.environment}-backup-rule"
     target_vault_name = aws_backup_vault.vault.name
-    
+
     # Corrected to standard AWS 6-field cron syntax (Runs daily at midnight UTC)
-    schedule          = "cron(0 0 * * ? *)"
+    schedule = "cron(0 0 * * ? *)"
 
     lifecycle {
       delete_after = var.retention_days
